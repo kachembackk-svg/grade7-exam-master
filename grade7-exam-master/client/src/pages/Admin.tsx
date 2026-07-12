@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDB } from '../App';
-import { SUBJECT_FILES } from '../lib/database';
+import { DB_URL, SUBJECT_FILES, withBase } from '../lib/database';
 import { checkImageFiles } from '../lib/validation';
 import type { ImageCheckResult } from '../lib/validation';
 
@@ -21,9 +21,9 @@ export default function Admin() {
 
   useEffect(() => {
     const entries: { name: string; url: string }[] = [
-      { name: 'grade7_master_database.json', url: '/data/grade7_master_database.json' },
-      ...Object.entries(SUBJECT_FILES).map(([sid, url]) => ({ name: `${sid}_master.json`, url })),
-      { name: 'database_health_check.json', url: '/data/database_health_check.json' },
+      { name: 'grade7_master_database.json', url: withBase(DB_URL) },
+      ...Object.entries(SUBJECT_FILES).map(([sid, url]) => ({ name: `${sid}_master.json`, url: withBase(url) })),
+      { name: 'database_health_check.json', url: withBase('/data/database_health_check.json') },
     ];
     Promise.all(
       entries.map(async (e): Promise<FileStatus> => {
