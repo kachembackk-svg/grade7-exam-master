@@ -7,6 +7,7 @@ import { questionsFor, sampleQuestions } from '../lib/database';
 import type { OptionKey, Question } from '../lib/database';
 import { formatTime } from '../lib/scoring';
 import { recordAnswer, saveLastSession } from '../lib/progress';
+import { saveExamSession, loadExamSession, clearExamSession } from '../lib/examSession';
 
 type Phase = 'setup' | 'running' | 'done';
 
@@ -21,7 +22,11 @@ export default function MockExam() {
   const [idx, setIdx] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
+  const [startedAt, setStartedAt] = useState(0);
+  const [endsAt, setEndsAt] = useState(0);
+  const [expiredWhileAway, setExpiredWhileAway] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const resumeCheckedRef = useRef(false);
 
   const subject = db?.subjects.find((s) => s.id === subjectId);
 
@@ -32,6 +37,76 @@ export default function MockExam() {
     }
   };
   useEffect(() => stopTimer, []);
+
+  function startTicking(ends: number) {
+    stopTimer();
+    timerRef.current = window.setInterval(() => {
+      const remaining = Math.max(0, Math.round((ends - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) finishExam();
+    }, 1000);
+  }
+
+  // Resume a persisted in-progress exam once the database is available.
+  useEffect(() => {
+    if (!db || resumeCheckedRef.current) return;
+    resumeCheckedRef.current = true;
+    const session = loadExamSession();
+    if (!session) return;
+
+    const byId = new Map(db.questions.map((q) => [q.id, q]));
+    const qs = session.questionIds.map((id) => byId.get(id)).filter((q): q is Question => !!q);
+    if (qs.length === 0) {
+      clearExamSession();
+      return;
+    }
+
+    setSubjectId(session.subjectId);
+    setPaperId(session.paperId ?? '');
+    setExamQuestions(qs);
+    setAnswers(session.answers);
+    setIdx(Math.min(session.idx, qs.length - 1));
+    setStartedAt(session.startedAt);
+    setEndsAt(session.endsAt);
+    setTotalSeconds(Math.round((session.endsAt - session.startedAt) / 1000));
+
+    const remaining = Math.max(0, Math.round((session.endsAt - Date.now()) / 1000));
+    if (remaining <= 0) {
+      setSecondsLeft(0);
+      setExpiredWhileAway(true);
+      setPhase('done');
+      clearExamSession();
+    } else {
+      setSecondsLeft(remaining);
+      setPhase('running');
+      startTicking(session.endsAt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db]);
+
+  function persistProgress(currentAnswers: Record<string, OptionKey>, currentIdx: number, qs: Question[]) {
+    if (!subjectId || qs.length === 0 || endsAt === 0) return;
+    saveExamSession({
+      subjectId,
+      paperId: paperId || undefined,
+      questionIds: qs.map((q) => q.id),
+      answers: currentAnswers,
+      idx: currentIdx,
+      startedAt,
+      endsAt,
+    });
+  }
+
+  function selectAnswer(questionId: string, k: OptionKey) {
+    const next = { ...answers, [questionId]: k };
+    setAnswers(next);
+    persistProgress(next, idx, examQuestions);
+  }
+
+  function goToIndex(i: number) {
+    setIdx(i);
+    persistProgress(answers, i, examQuestions);
+  }
 
   function startExam() {
     if (!db || !subjectId) return;
@@ -46,30 +121,38 @@ export default function MockExam() {
     }
     if (qs.length === 0) return;
     const paper = paperId ? db.papers.find((p) => p.paperId === paperId) : undefined;
-    const minutes = paper?.durationMinutes ?? 90;
-    const secs = Math.max(60, Math.round((minutes * 60 * qs.length) / Math.max(qs.length, 60)));
+    // A full paper always gets its own real duration, regardless of question
+    // count; only the synthetic mixed-years mode has no "real" duration.
+    const secs = paper ? paper.durationMinutes * 60 : 90 * 60;
+    const now = Date.now();
+    const ends = now + secs * 1000;
+
     setExamQuestions(qs);
     setAnswers({});
     setIdx(0);
     setTotalSeconds(secs);
     setSecondsLeft(secs);
+    setStartedAt(now);
+    setEndsAt(ends);
+    setExpiredWhileAway(false);
     setPhase('running');
-    saveLastSession({ mode: 'mock', subjectId, paperId: paperId || undefined, at: Date.now() });
-    stopTimer();
-    timerRef.current = window.setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          finishExam();
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
+    saveLastSession({ mode: 'mock', subjectId, paperId: paperId || undefined, at: now });
+    saveExamSession({
+      subjectId,
+      paperId: paperId || undefined,
+      questionIds: qs.map((q) => q.id),
+      answers: {},
+      idx: 0,
+      startedAt: now,
+      endsAt: ends,
+    });
+    startTicking(ends);
   }
 
   function finishExam() {
     stopTimer();
     setPhase('done');
+    clearExamSession();
   }
 
   // record attempts once, when exam completes
@@ -121,8 +204,11 @@ export default function MockExam() {
             </select>
           </label>
           <p className="text-xs text-ink/60">
-            Timed at 90 minutes, like the real composite paper. No answers are shown until you finish. Gap
-            placeholder questions from incomplete source scans are automatically excluded.
+            A full paper is timed at that paper&apos;s real duration (90 minutes), regardless of how many
+            questions are active in it. Mixed-year quizzes default to 90 minutes too. No answers are shown
+            until you finish. Gap placeholder questions from incomplete source scans are automatically
+            excluded. If you refresh mid-exam, it resumes right where you left off, with the clock adjusted
+            for time that passed.
           </p>
           <button type="button" className="btn-copper" disabled={!subjectId} onClick={startExam}>
             Start exam
@@ -152,12 +238,12 @@ export default function MockExam() {
             index={idx + 1}
             total={examQuestions.length}
             selected={answers[examQuestions[idx].id] ?? null}
-            onSelect={(k) => setAnswers((a) => ({ ...a, [examQuestions[idx].id]: k }))}
+            onSelect={(k) => selectAnswer(examQuestions[idx].id, k)}
             revealAnswer={false}
           />
 
           <div className="flex items-center gap-2">
-            <button type="button" className="btn-ghost" disabled={idx === 0} onClick={() => setIdx((i) => i - 1)}>
+            <button type="button" className="btn-ghost" disabled={idx === 0} onClick={() => goToIndex(idx - 1)}>
               ← Previous
             </button>
             <button
@@ -165,7 +251,7 @@ export default function MockExam() {
               className="btn-primary"
               disabled={idx >= examQuestions.length - 1}
               onClick={() => {
-                setIdx((i) => i + 1);
+                goToIndex(idx + 1);
                 window.scrollTo({ top: 0 });
               }}
             >
@@ -174,23 +260,24 @@ export default function MockExam() {
           </div>
 
           <div className="card p-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink/60 mb-2">Question navigator</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink/60 mb-2">Answer sheet</p>
             <div className="flex flex-wrap gap-1.5">
               {examQuestions.map((q, i) => (
                 <button
                   key={q.id}
                   type="button"
-                  onClick={() => setIdx(i)}
-                  className={`w-8 h-8 rounded font-mono text-xs border ${
+                  onClick={() => goToIndex(i)}
+                  className={`w-8 h-9 rounded font-mono text-xs border flex flex-col items-center justify-center leading-none gap-0.5 ${
                     i === idx
                       ? 'border-eagle bg-eagle text-white'
                       : answers[q.id]
                         ? 'border-eagle bg-eagle-pale text-eagle-dark'
                         : 'border-line bg-white'
                   }`}
-                  aria-label={`Go to question ${i + 1}${answers[q.id] ? ' (answered)' : ''}`}
+                  aria-label={`Go to question ${i + 1}${answers[q.id] ? ` (answered ${answers[q.id]})` : ''}`}
                 >
-                  {i + 1}
+                  <span>{i + 1}</span>
+                  <span className="text-[9px] font-bold">{answers[q.id] ?? ''}</span>
                 </button>
               ))}
             </div>
@@ -200,6 +287,13 @@ export default function MockExam() {
 
       {phase === 'done' && (
         <>
+          {expiredWhileAway && (
+            <div className="card p-4 border-l-4 border-l-copper bg-copper-pale text-sm">
+              <p className="font-bold text-copper">Your exam time ran out while you were away.</p>
+              <p className="mt-1">Here are your results, based on the answers you had saved before time ran out.</p>
+            </div>
+          )}
+
           <ScoreSummary
             correct={score}
             total={examQuestions.length}
