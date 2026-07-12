@@ -9,6 +9,7 @@ import MockExam from './pages/MockExam';
 import RandomQuiz from './pages/RandomQuiz';
 import Search from './pages/Search';
 import Performance from './pages/Performance';
+import Review from './pages/Review';
 import Dashboard from './pages/Dashboard';
 import Diagnostics from './pages/Diagnostics';
 import Admin from './pages/Admin';
@@ -32,6 +33,7 @@ const NAV = [
   { to: '/quiz', label: 'Quiz' },
   { to: '/search', label: 'Search' },
   { to: '/performance', label: 'Performance' },
+  { to: '/review', label: 'Review' },
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/diagnostics', label: 'Diagnostics' },
   { to: '/admin', label: 'Data' },
@@ -106,6 +108,7 @@ export default function App() {
                 <Route path="/quiz" element={<RandomQuiz />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/performance" element={<Performance />} />
+                <Route path="/review" element={<Review />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/diagnostics" element={<Diagnostics />} />
                 <Route path="/admin" element={<Admin />} />
