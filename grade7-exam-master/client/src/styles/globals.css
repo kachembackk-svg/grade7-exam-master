@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-paper text-ink font-body antialiased;
+}
+
+.stamp {
+  @apply inline-block font-mono text-xs font-semibold border-2 border-current rounded px-2 py-0.5 tracking-widest;
+  transform: rotate(-2deg);
+}
+
+.paper-strip {
+  @apply font-mono text-[11px] sm:text-xs tracking-widest uppercase text-eagle-dark bg-eagle-pale border-b border-line px-4 py-2 rounded-t-xl;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold px-4 py-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-eagle;
+}
+.btn-primary { @apply btn bg-eagle text-white hover:bg-eagle-dark; }
+.btn-ghost { @apply btn bg-white border border-line text-ink hover:bg-eagle-pale; }
+.btn-copper { @apply btn bg-copper text-white hover:opacity-90; }
+
+.card { @apply bg-card border border-line rounded-xl shadow-sm; }
+
+.option-btn {
+  @apply w-full flex items-start gap-3 text-left border rounded-lg px-3 py-3 transition-colors bg-white border-line hover:border-eagle hover:bg-eagle-pale disabled:cursor-default;
+}
+.option-letter {
+  @apply flex-none w-7 h-7 rounded-md border border-line bg-paper font-mono text-sm font-semibold flex items-center justify-center;
+}
+
+select, input[type="text"], input[type="search"] {
+  @apply bg-white border border-line rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-eagle w-full;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

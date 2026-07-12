@@ -1,0 +1,11 @@
+{
+  "name": "grade7-exam-master",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Grade 7 Zambia ECZ Revision Exam App (root launcher)",
+  "scripts": {
+    "dev": "bash start.sh",
+    "start": "bash start.sh",
+    "build": "cd client && npm install && npm run build"
+  }
+}
