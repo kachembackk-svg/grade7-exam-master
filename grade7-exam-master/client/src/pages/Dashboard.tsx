@@ -108,12 +108,20 @@ export default function Dashboard() {
                       />
                     </div>
                     {s.attempted > 0 && (
-                      <Link
-                        to={`/practice?subject=${s.subjectId}`}
-                        className="text-xs text-eagle-dark font-semibold hover:underline mt-1 inline-block"
-                      >
-                        Practise {s.subjectName} →
-                      </Link>
+                      <div className="flex gap-3 mt-1">
+                        <Link
+                          to={`/practice?subject=${s.subjectId}`}
+                          className="text-xs text-eagle-dark font-semibold hover:underline"
+                        >
+                          Practise {s.subjectName} →
+                        </Link>
+                        <Link
+                          to={`/performance?subject=${s.subjectId}`}
+                          className="text-xs text-copper font-semibold hover:underline"
+                        >
+                          Performance →
+                        </Link>
+                      </div>
                     )}
                   </div>
                 );
