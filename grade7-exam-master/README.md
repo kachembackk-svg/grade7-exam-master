@@ -94,9 +94,9 @@ grade7-exam-master/
 
 ## Images
 
-**246 asset images are included.** The 5 English visual assets and all 77 Mathematics figures are re-rendered cleanly and watermark-free, and Integrated Science is **complete** — all 76 figures across all seven papers (2016–2021, 2023) extracted from the original ECZ scanned papers. Social Studies extraction has begun: the 2021 figures (the Q32 road-narrowing warning sign and the Q56–60 Luapula Province map) are in, cropped tightly from the scan. The remaining 0 images (the other Social Studies papers and CTS) are flagged as missing until their source PDFs are supplied.
+**All 246 asset images are included — 0 missing.** The 5 English visual assets and all 77 Mathematics figures are re-rendered cleanly and watermark-free. Integrated Science (76 figures), Social Studies (9 figures), and Creative & Technology Studies (79 figures) are likewise complete, extracted from the original ECZ scanned papers. See `DATABASE_HEALTH_CHECK_REPORT.md` for the per-subject breakdown.
 
-Adding them later is a drop-in operation: place each original image in `client/public/data/assets/` using the exact file name from `MISSING_IMAGES.md`, and it appears automatically. Questions with a missing image still show their full text, options, answer, and explanation, plus a written description of the figure.
+If a source PDF for a future paper is supplied later, adding its images is a drop-in operation: place each original image in `client/public/data/assets/` using the exact file name from `MISSING_IMAGES.md`'s naming convention, and it appears automatically. Questions with a missing image still show their full text, options, answer, and explanation, plus a written description of the figure.
 
 ## Data integrity
 

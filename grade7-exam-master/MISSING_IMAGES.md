@@ -1,6 +1,8 @@
 # Missing Images Manifest
 
-This project ships with **246 asset images present** and **0 still missing**. Integrated Science, Mathematics, English and Social Studies image sets are complete. The remaining images are still missing because their source PDFs (CTS papers) have not been provided yet.
+This project ships with **246 asset images present** and **0 still missing**. All five subjects — Integrated Science, Mathematics, English, Social Studies, and Creative & Technology Studies — have complete image sets. See `DATABASE_HEALTH_CHECK_REPORT.md` for the per-subject breakdown.
+
+This manifest documents the naming convention to use if images for a future paper need to be added later.
 
 ## How to add a missing image
 
