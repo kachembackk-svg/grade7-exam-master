@@ -1,5 +1,6 @@
 // Progress tracking in browser localStorage. No backend needed for V1.
 import type { OptionKey, Question } from './database';
+import { markWrong } from './mistakeBank';
 
 export type Mode = 'practice' | 'mock' | 'quiz';
 
@@ -53,17 +54,22 @@ function write(store: Store) {
 }
 
 export function recordAnswer(q: Question, chosen: OptionKey, mode: Mode) {
+  const correct = q.correctAnswer === chosen;
   const store = read();
   store.attempts.push({
     questionId: q.id,
     subjectId: q.subjectId,
     paperId: q.paperId,
     chosen,
-    correct: q.correctAnswer === chosen,
+    correct,
     mode,
     at: Date.now(),
   });
   write(store);
+  // Every wrong answer, in any mode, enters (or resets) the mistake bank's
+  // review queue. Guarded on a non-null correctAnswer so a data-quality gap
+  // (an unresolved answer key) can't loop a question into the bank forever.
+  if (q.correctAnswer != null && !correct) markWrong(q.id);
 }
 
 export function saveLastSession(s: LastSession) {
