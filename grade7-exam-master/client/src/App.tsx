@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
+import { HashRouter, NavLink, Route, Routes } from 'react-router-dom';
 import type { MasterDB } from './lib/database';
 import { loadDatabase } from './lib/database';
 import Home from './pages/Home';
@@ -49,7 +49,7 @@ export default function App() {
 
   return (
     <DBContext.Provider value={{ db, loading, error }}>
-      <BrowserRouter>
+      <HashRouter>
         <div className="min-h-screen flex flex-col">
           <header className="bg-eagle-dark text-white sticky top-0 z-20 shadow">
             <div className="max-w-5xl mx-auto px-4">
@@ -122,7 +122,7 @@ export default function App() {
             </div>
           </footer>
         </div>
-      </BrowserRouter>
+      </HashRouter>
     </DBContext.Provider>
   );
 }

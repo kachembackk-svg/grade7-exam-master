@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 // Replit-friendly config: binds to 0.0.0.0:3000 and routes HMR through the
 // HTTPS proxy when running inside a Repl.
 export default defineConfig({
+  base: process.env.GITHUB_ACTIONS ? '/grade7-exam-master/' : '/',
   plugins: [react()],
   server: {
     host: '0.0.0.0',
