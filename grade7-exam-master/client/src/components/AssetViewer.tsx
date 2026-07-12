@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDB } from '../App';
-import { getAsset } from '../lib/database';
+import { getAsset, withBase } from '../lib/database';
 
 // Displays the actual image for an asset. A written description is shown
 // ONLY as a fallback when the image file is genuinely unavailable — never
@@ -29,7 +29,7 @@ export default function AssetViewer({ assetId }: { assetId: string | null | unde
       </div>
       {showImage ? (
         <img
-          src={asset.path}
+          src={withBase(asset.path)}
           alt={asset.title}
           className="w-full h-auto max-h-[480px] object-contain bg-white"
           onError={() => setLoadFailed(true)}

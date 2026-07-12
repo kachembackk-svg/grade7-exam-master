@@ -2,6 +2,7 @@
 // JSON (independent of the build-time report), plus an image-file checker
 // that verifies asset files actually exist on the server.
 import type { MasterDB } from './database';
+import { withBase } from './database';
 
 export interface RuntimeHealth {
   totalSubjects: number;
@@ -78,7 +79,7 @@ export async function checkImageFiles(
       if (!asset) break;
       let exists = false;
       try {
-        const res = await fetch(asset.path, { method: 'HEAD' });
+        const res = await fetch(withBase(asset.path), { method: 'HEAD' });
         exists = res.ok;
       } catch {
         exists = false;

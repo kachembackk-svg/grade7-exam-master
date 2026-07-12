@@ -143,12 +143,20 @@ export const SUBJECT_FILES: Record<string, string> = {
   cts: '/data/cts_master.json',
 };
 
+// The database JSON and every asset path inside it are absolute (leading
+// "/"), so they need to be resolved against Vite's base path (which is
+// non-root when deployed under a GitHub Pages project subpath).
+export function withBase(path: string): string {
+  return import.meta.env.BASE_URL + path.replace(/^\//, '');
+}
+
 let cached: MasterDB | null = null;
 
 export async function loadDatabase(): Promise<MasterDB> {
   if (cached) return cached;
-  const res = await fetch(DB_URL);
-  if (!res.ok) throw new Error(`Failed to load database (${res.status}) from ${DB_URL}`);
+  const url = withBase(DB_URL);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to load database (${res.status}) from ${url}`);
   const db = (await res.json()) as MasterDB;
   cached = db;
   return db;
