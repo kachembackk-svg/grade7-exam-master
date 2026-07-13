@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom';
 import type { MasterDB } from './lib/database';
 import { loadDatabase } from './lib/database';
+import ProfileSwitcher from './components/ProfileSwitcher';
 import Home from './pages/Home';
 import Subjects from './pages/Subjects';
 import Practice from './pages/Practice';
@@ -62,9 +63,10 @@ export default function App() {
               <div className="flex items-center gap-3 py-3">
                 <span className="stamp text-sun">ECZ · G7</span>
                 <span className="font-display font-bold text-lg leading-none">Grade 7 Revision</span>
-                <span className="hidden sm:inline font-mono text-[11px] tracking-widest uppercase text-white/60 ml-auto">
+                <span className="hidden sm:inline font-mono text-[11px] tracking-widest uppercase text-white/60">
                   Zambia · Composite Examination
                 </span>
+                <ProfileSwitcher />
               </div>
               <nav className="flex gap-1 overflow-x-auto pb-2 -mx-1 px-1" aria-label="Main navigation">
                 {NAV.map((n) => (

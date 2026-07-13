@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { useDB } from '../App';
 import { computeStats, gradeLabel } from '../lib/scoring';
 import { getAttempts, resetProgress } from '../lib/progress';
+import { getActiveProfile } from '../lib/profiles';
 
 export default function Dashboard() {
   const { db } = useDB();
   const [, setTick] = useState(0);
+  const activeProfile = useMemo(() => getActiveProfile(), []);
   const attempts = useMemo(() => getAttempts(), []);
   const stats = useMemo(() => (db ? computeStats(db, attempts) : null), [db, attempts]);
 
@@ -23,7 +25,7 @@ export default function Dashboard() {
             type="button"
             className="btn-ghost text-sm !py-1.5"
             onClick={() => {
-              if (confirm('Reset all your saved progress on this device? This cannot be undone.')) {
+              if (confirm(`Reset ${activeProfile.name}'s saved progress on this device? This cannot be undone.`)) {
                 resetProgress();
                 setTick((t) => t + 1);
                 location.reload();
