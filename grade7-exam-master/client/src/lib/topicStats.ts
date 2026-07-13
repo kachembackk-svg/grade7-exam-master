@@ -13,9 +13,14 @@ export interface TopicStat {
 }
 
 // Attempts don't carry a topic — join back to the question database by id.
-// Only topics with enough attempts to be meaningful are surfaced, sorted
-// weakest (lowest accuracy) first.
-export function computeTopicStats(db: MasterDB, attempts: AttemptRecord[], subjectId: string): TopicStat[] {
+// Shared by computeTopicStats (Weak-Topic Radar) and lib/readiness.ts
+// (Readiness Score), which need the same per-topic aggregation but different
+// filtering: this returns every topic with at least one attempt, unfiltered.
+export function topicAccuracyMap(
+  db: MasterDB,
+  attempts: AttemptRecord[],
+  subjectId: string,
+): Map<string, { attempted: number; correct: number }> {
   const topicOf = new Map(db.questions.map((q) => [q.id, q.topic]));
   const byTopic = new Map<string, { attempted: number; correct: number }>();
 
@@ -28,6 +33,14 @@ export function computeTopicStats(db: MasterDB, attempts: AttemptRecord[], subje
     if (a.correct) s.correct++;
     byTopic.set(topic, s);
   }
+
+  return byTopic;
+}
+
+// Only topics with enough attempts to be meaningful are surfaced, sorted
+// weakest (lowest accuracy) first.
+export function computeTopicStats(db: MasterDB, attempts: AttemptRecord[], subjectId: string): TopicStat[] {
+  const byTopic = topicAccuracyMap(db, attempts, subjectId);
 
   return Array.from(byTopic.entries())
     .filter(([, s]) => s.attempted >= MIN_ATTEMPTS_FOR_RADAR)
