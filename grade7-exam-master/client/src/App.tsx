@@ -3,6 +3,7 @@ import { HashRouter, NavLink, Route, Routes } from 'react-router-dom';
 import type { MasterDB } from './lib/database';
 import { loadDatabase } from './lib/database';
 import ProfileSwitcher from './components/ProfileSwitcher';
+import PWAStatus from './components/PWAStatus';
 import Home from './pages/Home';
 import Subjects from './pages/Subjects';
 import Practice from './pages/Practice';
@@ -132,6 +133,8 @@ export default function App() {
               </span>
             </div>
           </footer>
+
+          <PWAStatus />
         </div>
       </HashRouter>
     </DBContext.Provider>
