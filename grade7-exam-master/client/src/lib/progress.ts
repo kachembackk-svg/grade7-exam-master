@@ -1,6 +1,7 @@
 // Progress tracking in browser localStorage. No backend needed for V1.
 import type { OptionKey, Question } from './database';
 import { markWrong } from './mistakeBank';
+import { keyFor, loadJSON, removeKey, saveJSON } from './storage';
 
 export type Mode = 'practice' | 'mock' | 'quiz';
 
@@ -27,29 +28,38 @@ interface Store {
   lastSession?: LastSession;
 }
 
-const KEY = 'g7ecz_progress_v1';
+const KEY = 'progress_v1'; // namespaced per-profile via lib/storage.ts
+const LEGACY_KEY = 'g7ecz_progress_v1'; // pre-profiles unnamespaced key
 const MAX_ATTEMPTS = 5000;
 
 function read(): Store {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return { attempts: [] };
-    const parsed = JSON.parse(raw) as Store;
-    if (!Array.isArray(parsed.attempts)) return { attempts: [] };
-    return parsed;
-  } catch {
-    return { attempts: [] };
-  }
+  const store = loadJSON<Store>(KEY, { attempts: [] });
+  if (!Array.isArray(store.attempts)) return { attempts: [] };
+  return store;
 }
 
 function write(store: Store) {
+  if (store.attempts.length > MAX_ATTEMPTS) {
+    store.attempts = store.attempts.slice(-MAX_ATTEMPTS);
+  }
+  saveJSON(KEY, store);
+}
+
+// One-time migration for anyone who used the app before Sibling Profiles
+// existed. Called by lib/profiles.ts, which passes in the id of the very
+// first profile it just created — this function targets that id explicitly
+// (via storage.ts's keyFor) rather than assuming it knows the id itself, so
+// it stays correct even if the first-profile id scheme ever changes.
+export function migrateLegacyProgress(targetProfileId: string): void {
   try {
-    if (store.attempts.length > MAX_ATTEMPTS) {
-      store.attempts = store.attempts.slice(-MAX_ATTEMPTS);
-    }
-    localStorage.setItem(KEY, JSON.stringify(store));
+    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    if (!legacyRaw) return;
+    const newKey = keyFor(targetProfileId, KEY);
+    if (localStorage.getItem(newKey)) return; // already migrated
+    localStorage.setItem(newKey, legacyRaw);
+    localStorage.removeItem(LEGACY_KEY);
   } catch {
-    // localStorage full or unavailable — progress simply isn't saved.
+    // ignore
   }
 }
 
@@ -87,9 +97,5 @@ export function getAttempts(): AttemptRecord[] {
 }
 
 export function resetProgress() {
-  try {
-    localStorage.removeItem(KEY);
-  } catch {
-    // ignore
-  }
+  removeKey(KEY);
 }

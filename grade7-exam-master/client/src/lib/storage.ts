@@ -12,8 +12,25 @@ export function activeProfileId(): string {
   }
 }
 
+export function setActiveProfileId(id: string): void {
+  const trimmed = id.trim();
+  if (!trimmed) return;
+  try {
+    localStorage.setItem(ACTIVE_PROFILE_KEY, trimmed);
+  } catch {
+    // ignore
+  }
+}
+
+// Exported so callers that need to target an explicit profile (rather than
+// whichever one is currently active) — e.g. a one-time migration writing
+// into a specific profile's slot — can compute the same key format.
+export function keyFor(profileId: string, key: string): string {
+  return `g7ecz:${profileId}:${key}`;
+}
+
 function namespacedKey(key: string): string {
-  return `g7ecz:${activeProfileId()}:${key}`;
+  return keyFor(activeProfileId(), key);
 }
 
 export function loadJSON<T>(key: string, fallback: T): T {
